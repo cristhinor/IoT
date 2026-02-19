@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Monitor Energético</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #111;
+      color: #00ffcc;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    .panel {
+      background-color: #1c1c1c;
+      border-radius: 15px;
+      padding: 20px;
+      width: 80%;
+      margin: auto;
+      box-shadow: 0 0 20px #00ffcc;
+    }
+
+    .valor-actual {
+      font-size: 60px;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    canvas {
+      background-color: #222;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>⚡ Monitor de Energía - Casa</h1>
+
+<div class="panel">
+  <div>Consumo Actual (kWh)</div>
+  <div class="valor-actual" id="valorActual">0.00</div>
+  <canvas id="grafica"></canvas>
+</div>
+
+<script>
+
+const channelID = "3269236";
+const readAPIKey = "PDPCE774ZFAWV1SF";
+
+let chart;
+
+function cargarDatos() {
+
+  fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=20`)
+    .then(response => response.json())
+    .then(data => {
+
+      const valores = data.feeds.map(d => parseFloat(d.field1));
+      const fechas = data.feeds.map(d => new Date(d.created_at).toLocaleTimeString());
+
+      // Mostrar último valor grande
+      const ultimoValor = valores[valores.length - 1];
+      document.getElementById("valorActual").innerText = ultimoValor.toFixed(2);
+
+      if (!chart) {
+        chart = new Chart(document.getElementById("grafica"), {
+          type: "line",
+          data: {
+            labels: fechas,
+            datasets: [{
+              label: "Energía (kWh)",
+              data: valores,
+              borderColor: "#00ffcc",
+              backgroundColor: "rgba(0,255,204,0.1)",
+              borderWidth: 2,
+              tension: 0.3
+            }]
+          },
+          options: {
+            scales: {
+              x: { ticks: { color: "#00ffcc" } },
+              y: { ticks: { color: "#00ffcc" } }
+            },
+            plugins: {
+              legend: {
+                labels: { color: "#00ffcc" }
+              }
+            }
+          }
+        });
+      } else {
+        chart.data.labels = fechas;
+        chart.data.datasets[0].data = valores;
+        chart.update();
+      }
+
+    });
+}
+
+// Cargar al iniciar
+cargarDatos();
+
+// Actualizar cada 5 segundos
+setInterval(cargarDatos, 5000);
+
+</script>
+
+</body>
+</html>
