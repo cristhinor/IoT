@@ -133,6 +133,11 @@ function cargarDatos() {
 cargarDatos();
 setInterval(cargarDatos, 5000);
 
+// Recargar página cada 2 minutos para evitar cache
+setInterval(() => {
+  location.reload();
+}, 120000);
+
 </script>
 
 </body>
