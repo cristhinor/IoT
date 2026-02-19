@@ -6,9 +6,9 @@
   <style>
     body {
       background-color: #111;
-      color: #00ffcc;
       font-family: Arial, sans-serif;
       text-align: center;
+      color: white;
     }
 
     h1 {
@@ -25,9 +25,15 @@
     }
 
     .valor-actual {
-      font-size: 60px;
+      font-size: 70px;
       margin: 20px 0;
       font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .estado {
+      font-size: 20px;
+      margin-bottom: 15px;
     }
 
     canvas {
@@ -38,11 +44,12 @@
 </head>
 <body>
 
-<h1>⚡ Monitor de Energía - Casa</h1>
+<h1>⚡ Panel Energético - Casa</h1>
 
 <div class="panel">
   <div>Consumo Actual (kWh)</div>
   <div class="valor-actual" id="valorActual">0.00</div>
+  <div class="estado" id="estadoConsumo">Estado: Normal</div>
   <canvas id="grafica"></canvas>
 </div>
 
@@ -53,6 +60,27 @@ const readAPIKey = "PDPCE774ZFAWV1SF";
 
 let chart;
 
+function evaluarNivel(valor) {
+  const estado = document.getElementById("estadoConsumo");
+  const valorTexto = document.getElementById("valorActual");
+
+  if (valor <= 4) {
+    valorTexto.style.color = "#00ff00";
+    estado.innerText = "Estado: 🟢 Consumo Normal";
+    estado.style.color = "#00ff00";
+  } 
+  else if (valor <= 7) {
+    valorTexto.style.color = "#ffff00";
+    estado.innerText = "Estado: 🟡 Consumo Alto";
+    estado.style.color = "#ffff00";
+  } 
+  else {
+    valorTexto.style.color = "#ff0000";
+    estado.innerText = "Estado: 🔴 Consumo Crítico";
+    estado.style.color = "#ff0000";
+  }
+}
+
 function cargarDatos() {
 
   fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=20`)
@@ -62,9 +90,10 @@ function cargarDatos() {
       const valores = data.feeds.map(d => parseFloat(d.field1));
       const fechas = data.feeds.map(d => new Date(d.created_at).toLocaleTimeString());
 
-      // Mostrar último valor grande
       const ultimoValor = valores[valores.length - 1];
       document.getElementById("valorActual").innerText = ultimoValor.toFixed(2);
+
+      evaluarNivel(ultimoValor);
 
       if (!chart) {
         chart = new Chart(document.getElementById("grafica"), {
@@ -82,12 +111,12 @@ function cargarDatos() {
           },
           options: {
             scales: {
-              x: { ticks: { color: "#00ffcc" } },
-              y: { ticks: { color: "#00ffcc" } }
+              x: { ticks: { color: "white" } },
+              y: { ticks: { color: "white" } }
             },
             plugins: {
               legend: {
-                labels: { color: "#00ffcc" }
+                labels: { color: "white" }
               }
             }
           }
@@ -101,10 +130,7 @@ function cargarDatos() {
     });
 }
 
-// Cargar al iniciar
 cargarDatos();
-
-// Actualizar cada 5 segundos
 setInterval(cargarDatos, 5000);
 
 </script>
