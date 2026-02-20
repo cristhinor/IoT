@@ -1,144 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Monitor Energético</title>
+  <meta charset="UTF-8">
+  <title>Panel IoT Profesional</title>
+
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      background-color: #111;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      color: white;
-    }
-
-    h1 {
-      margin-top: 20px;
-    }
-
-    .panel {
-      background-color: #1c1c1c;
-      border-radius: 15px;
-      padding: 20px;
-      width: 80%;
-      margin: auto;
-      box-shadow: 0 0 20px #00ffcc;
-    }
-
-    .valor-actual {
-      font-size: 70px;
-      margin: 20px 0;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-
-    .estado {
-      font-size: 20px;
-      margin-bottom: 15px;
-    }
-
-    canvas {
-      background-color: #222;
-      border-radius: 10px;
-    }
-  </style>
 </head>
 <body>
 
-<h1>⚡ Panel Energético - Casa</h1>
+<div class="container">
 
-<div class="panel">
-  <div>Consumo Actual (kWh)</div>
-  <div class="valor-actual" id="valorActual">0.00</div>
-  <div class="estado" id="estadoConsumo">Estado: Normal</div>
-  <canvas id="grafica"></canvas>
+  <h1>Panel IoT - Control de Consumo</h1>
+
+  <div class="card">
+    <h2>Consumo en Tiempo Real</h2>
+    <canvas id="graficaConsumo"></canvas>
+  </div>
+
+  <div class="card control">
+    <h2>Control LED</h2>
+
+    <div id="toggleBtn" onclick="toggleLED()" class="toggle off">
+      OFF
+    </div>
+
+    <p id="estadoTexto">LED apagado</p>
+  </div>
+
+  <div class="card">
+    <h2>Descargar Datos</h2>
+    <button onclick="descargarCSV()">Descargar CSV</button>
+    <button onclick="descargarJSON()">Descargar JSON</button>
+  </div>
+
 </div>
 
-<script>
-
-const channelID = "3269236";
-const readAPIKey = "PDPCE774ZFAWV1SF";
-
-let chart;
-
-function evaluarNivel(valor) {
-  const estado = document.getElementById("estadoConsumo");
-  const valorTexto = document.getElementById("valorActual");
-
-  if (valor <= 4) {
-    valorTexto.style.color = "#00ff00";
-    estado.innerText = "Estado: 🟢 Consumo Normal";
-    estado.style.color = "#00ff00";
-  } 
-  else if (valor <= 7) {
-    valorTexto.style.color = "#ffff00";
-    estado.innerText = "Estado: 🟡 Consumo Alto";
-    estado.style.color = "#ffff00";
-  } 
-  else {
-    valorTexto.style.color = "#ff0000";
-    estado.innerText = "Estado: 🔴 Consumo Crítico";
-    estado.style.color = "#ff0000";
-  }
-}
-
-function cargarDatos() {
-
-  fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${readAPIKey}&results=20`)
-    .then(response => response.json())
-    .then(data => {
-
-      const valores = data.feeds.map(d => parseFloat(d.field1));
-      const fechas = data.feeds.map(d => new Date(d.created_at).toLocaleTimeString());
-
-      const ultimoValor = valores[valores.length - 1];
-      document.getElementById("valorActual").innerText = ultimoValor.toFixed(2);
-
-      evaluarNivel(ultimoValor);
-
-      if (!chart) {
-        chart = new Chart(document.getElementById("grafica"), {
-          type: "line",
-          data: {
-            labels: fechas,
-            datasets: [{
-              label: "Energía (kWh)",
-              data: valores,
-              borderColor: "#00ffcc",
-              backgroundColor: "rgba(0,255,204,0.1)",
-              borderWidth: 2,
-              tension: 0.3
-            }]
-          },
-          options: {
-            scales: {
-              x: { ticks: { color: "white" } },
-              y: { ticks: { color: "white" } }
-            },
-            plugins: {
-              legend: {
-                labels: { color: "white" }
-              }
-            }
-          }
-        });
-      } else {
-        chart.data.labels = fechas;
-        chart.data.datasets[0].data = valores;
-        chart.update();
-      }
-
-    });
-}
-
-cargarDatos();
-setInterval(cargarDatos, 5000);
-
-// Recargar página cada 2 minutos para evitar cache
-setInterval(() => {
-  location.reload();
-}, 120000);
-
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
